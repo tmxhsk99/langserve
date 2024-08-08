@@ -1,0 +1,31 @@
+server:
+  servlet:
+    encoding:
+      force-response: true
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;NON_KEYWORDS=USER
+    username:
+    password:
+    path: /h2-console
+    driver-class-name: org.h2.Driver
+
+  h2:
+    console:
+      enabled: true
+
+  jpa:
+    open-in-view: false
+    show-sql: true
+    properties:
+      hibernate:
+        ddl-auto: create-drop
+        show_sql: true
+        format_sql: true
+        logging.level:
+        org.hibernate.SQL: debug
+    defer-datasource-initialization: true
+
+  sql:
+    init.mode: never # data.sql 실행 여부
