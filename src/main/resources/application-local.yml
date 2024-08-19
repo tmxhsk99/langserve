@@ -29,3 +29,10 @@ spring:
 
   sql:
     init.mode: never # data.sql 실행 여부
+
+# 기본으로 사용 할 로컬 LLM 관련 정보 설정 정보
+ollama:
+  port: 11434
+  model:
+    name: Meta-Llama-3.1-8B:latest
+
