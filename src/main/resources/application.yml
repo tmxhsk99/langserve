@@ -1,0 +1,78 @@
+server:
+  port: 8080
+  servlet:
+    encoding:
+      force-response: true
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;NON_KEYWORDS=USER
+    username:
+    password:
+    path: /h2-console
+    driver-class-name: org.h2.Driver
+
+  h2:
+    console:
+      enabled: true
+
+  jpa:
+    open-in-view: false
+    show-sql: true
+    properties:
+      hibernate:
+        ddl-auto: create-drop
+        show_sql: true
+        format_sql: true
+        logging.level:
+        org.hibernate.SQL: debug
+    defer-datasource-initialization: true
+
+  sql:
+    init.mode: never # data.sql 실행 여부
+# Spring AI 설정
+  ai:
+    ollama:
+      # Ollama 서버의 기본 URL
+      base-url: http://localhost:11434
+      chat:
+        options:
+          # 사용할 AI 모델의 이름
+          model: Meta-Llama-3.1-8B:latest
+          # 출력의 무작위성을 조절 (0에 가까울수록 결정적, 1에 가까울수록 창의적)
+          temperature: 0.7
+          # 각 단계에서 고려할 최상위 토큰의 수 (낮을수록 더 집중된 출력)
+          top_k: 40
+          # 누적 확률 임계값 (다양성과 품질의 균형을 조절)
+          top_p: 0.9
+          # 반복을 줄이기 위한 페널티 (높을수록 반복이 줄어듦)
+          repeat_penalty: 1.1
+          # 생성할 최대 토큰 수 (응답 길이 제한)
+          max_tokens: 800
+          # 응답 생성을 중지할 토큰 목록 (대화 형식에 따라 조정)
+          stop: ["Human:", "Assistant:"]
+      embedding:
+        # 임베딩에 사용할 모델 (보통 chat 모델과 동일)
+        model: Meta-Llama-3.1-8B:latest
+# 옵션 고급설정
+#       # API 요청의 최대 대기 시간 (밀리초)
+#       timeout: 60000
+#       chat:
+#         options:
+#           # 결과의 일관성을 위한 시드 값 (재현 가능한 결과를 위해 사용)
+#           seed: 42
+#           # 빈도 기반 페널티 (자주 사용된 단어에 대한 페널티, 높을수록 다양성 증가)
+#           frequency_penalty: 0.5
+#           # 존재 기반 페널티 (이미 사용된 단어에 대한 페널티, 높을수록 새로운 주제 도입 가능성 증가)
+#           presence_penalty: 0.
+logging:
+  level:
+    # Spring AI 관련 로그 레벨 설정
+    org.springframework.ai: DEBUG
+
+# gitLab 관련 설정
+gitlab:
+  api:
+    url: https://your-gitlab-instance.com
+    token: your-gitlab-personal-access-token
+
