@@ -26,50 +26,63 @@ import static com.kjh.ollama.langserve.util.MessageUtil.*;
 @RequiredArgsConstructor
 public class ExceptionController {
 
+    /**
+     * 요청이 잘못된 경우 에러 처리
+     */
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseBody
     public CustomErrorResponse invalidRequestHandler(MethodArgumentNotValidException e) {
         log.error(toErrorMessageFormat(e));
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "잘못된 요청 입니다.", e.getFieldErrors());
+    }
+
+    /**
+     * 사용자 정의 커스텀 에러 처리
+     */
+    @ExceptionHandler(BaseException.class)
+    @ResponseBody
+    public ResponseEntity<CustomErrorResponse> baseExceptionHandler(BaseException e) {
+        log.error(toErrorMessageFormat(e));
+        CustomErrorResponse errorResponse = buildErrorResponse(e);
+        return ResponseEntity.status(e.getStatusCode()).body(errorResponse);
+    }
+
+    /**
+     * 그 이외의 예외 처리
+     */
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler(Exception.class)
+    @ResponseBody
+    public CustomErrorResponse globalExceptionHandler(Exception e) {
+        log.error(toErrorMessageFormat(e));
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, toErrorMessageFormat(e));
+    }
+
+    private CustomErrorResponse buildErrorResponse(HttpStatus status, String message, List<FieldError> fieldErrors) {
         CustomErrorResponse response = CustomErrorResponse.builder()
-                .code(HttpStatus.BAD_REQUEST.value())
-                .message("잘못된 요청 입니다.")
+                .code(status.value())
+                .message(message)
                 .build();
-        List<FieldError> fieldErrors = e.getFieldErrors();
         for (FieldError fieldError : fieldErrors) {
             response.addValidation(fieldError.getField(), fieldError.getDefaultMessage());
         }
         return response;
     }
 
-    @ExceptionHandler(BaseException.class)
-    @ResponseBody
-    public ResponseEntity<CustomErrorResponse> baseExceptionHandler(BaseException e) {
-        log.error(toErrorMessageFormat(e));
-        int statusCode = e.getStatusCode();
-
-        CustomErrorResponse body = CustomErrorResponse.builder()
-                .code(statusCode)
+    private CustomErrorResponse buildErrorResponse(BaseException e) {
+        return CustomErrorResponse.builder()
+                .code(e.getStatusCode())
                 .message(e.getMessage())
                 .validation(e.getValidation())
                 .build();
-
-        ResponseEntity<CustomErrorResponse> response = ResponseEntity.status(statusCode).body(body);
-
-        return response;
     }
 
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    @ExceptionHandler(Exception.class)
-    @ResponseBody
-    public CustomErrorResponse globalExceptionHandler (Exception e){
-        log.error(toErrorMessageFormat(e));
+    private CustomErrorResponse buildErrorResponse(HttpStatus status, String message) {
         return CustomErrorResponse.builder()
-                .code(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .message(toErrorMessageFormat(e))
+                .code(status.value())
+                .message(message)
                 .build();
     }
-
-
 
 }
