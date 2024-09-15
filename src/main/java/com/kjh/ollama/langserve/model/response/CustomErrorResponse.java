@@ -6,7 +6,6 @@ import lombok.Getter;
 import java.util.HashMap;
 import java.util.Map;
 
-@Getter
 public record CustomErrorResponse(int code, String message, Map<String, String> validation) {
     @Builder
     public CustomErrorResponse(int code, String message, Map<String, String> validation) {
