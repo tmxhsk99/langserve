@@ -102,4 +102,28 @@ public class PositionFactory {
                 .withStartSha(startSha)
                 .withHeadSha(headSha);
     }
+
+    /**
+     * 파일의 지정된 줄 범위에 대한 Position 객체를 생성한다.
+     * @param filePath 파일 경로
+     * @param startLine 범위의 시작 줄 번호
+     * @param endLine 범위의 끝 줄 번호
+     * @param headSha Merge Request의 최신 커밋 SHA
+     * @param isNewFile 새 파일 여부
+     * @return 지정되 줄 범위에 대한 Positon 객체
+     */
+    public static Position forLineRange(String filePath, int startLine, int endLine, String headSha, boolean isNewFile){
+        Position position = new Position()
+                .withNewPath(filePath)
+                .withNewLine(endLine) // 코멘트 할 마지막 줄
+                .withPositionType(Position.PositionType.TEXT)
+                .withHeadSha(headSha);
+
+        if(!isNewFile){
+            position.withOldPath(filePath)
+                    .withOldLine(startLine); // 코멘트 시작 줄
+        }
+
+        return position;
+    }
 }

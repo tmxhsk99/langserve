@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.util.List;
 
-import static com.kjh.ollama.langserve.util.MessageUtil.*;
+import static com.kjh.ollama.langserve.util.MessageUtils.*;
 
 /**
  * 전체 컨트롤 공통 에러처리 ControllerAdvice
