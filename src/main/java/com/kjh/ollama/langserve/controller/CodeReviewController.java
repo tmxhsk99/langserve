@@ -1,5 +1,6 @@
 package com.kjh.ollama.langserve.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kjh.ollama.langserve.exception.GitLabServiceException;
 import com.kjh.ollama.langserve.model.vo.ChangeFile;
 import com.kjh.ollama.langserve.model.vo.GitLabWebhookEvent;
@@ -26,7 +27,6 @@ public class CodeReviewController {
 
     private final GitLabService gitLabService;
     private final AICodeReviewService aiCodeReviewService;
-
     /**
      * 코드리뷰를 처리한다.
      */
@@ -48,6 +48,7 @@ public class CodeReviewController {
         try {
             List<ChangeFile> changedFiles = gitLabService.getChangeFiles(projectId, mergeRequestIid);
 
+
             for (ChangeFile file : changedFiles) {
                 String newFileContent = gitLabService.getFileContent(projectId, file.newPath(), event.objectAttributes().sourceBranch());
                 String oldFileContent = gitLabService.getFileContent(projectId, file.oldPath(), event.objectAttributes().sourceBranch());
@@ -56,12 +57,22 @@ public class CodeReviewController {
                 List<ReviewComment> reviewComments = aiCodeReviewService.reviewCode(oldFileContent, newFileContent);
 
                 for (ReviewComment reviewComment : reviewComments) {
+                    int startLine = reviewComment.startLine(); // 새로운 메서드: 코멘트 시작 줄
+                    int endLine = reviewComment.endLine();     // 새로운 메서드: 코멘트 끝 줄
+
+                    // AI 서비스가 범위를 제공하지 않는 경우, 단일 라인을 범위로 취급
+                    if (startLine == 0 && endLine == 0) {
+                        startLine = reviewComment.lineNumber();
+                        endLine = reviewComment.lineNumber();
+                    }
+
                     gitLabService.postReviewComment(
                             projectId,
                             mergeRequestIid,
                             reviewComment.comment(),
                             file.newPath(),
-                            reviewComment.lineNumber(),
+                            startLine,
+                            endLine,
                             headSha,
                             file.isNewFile()
                     );
@@ -72,4 +83,6 @@ public class CodeReviewController {
             throw e;
         }
     }
+
+
 }
