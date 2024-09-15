@@ -21,7 +21,7 @@ public class GitLabService {
     private final GitLabApi gitLabApi;
 
     public GitLabService(@Value("${gitlab.api.url}") String gitLabUrl, @Value("${gitlab.api.token}") String gitLabToken) {
-        this.gitLabApi = new GitLabApi(gitLabUrl, gitLabToken);
+        this.gitLabApi = new GitLabApi(GitLabApi.ApiVersion.V4,gitLabUrl, gitLabToken);
     }
 
     /**
@@ -65,25 +65,25 @@ public class GitLabService {
     }
 
     /**
-     * Merge Request에 리뷰 코멘트를 작성한다.
-     *
+     * Merge Request에 지정된 줄 범위에 대한 리뷰 코멘트를 작성한다.
      */
     public Discussion postReviewComment(Long projectId, Long mergeRequestIid, String body,
-                                        String filePath, Integer newLine, String headSha,
+                                        String filePath, int startLine, int endLine, String headSha,
                                         Boolean isNewFile) throws GitLabServiceException {
         try {
-            Position position;
-            if (isNewFile) {
-                position = PositionFactory.forNewFile(filePath, newLine, headSha);
-            } else {
-                position = PositionFactory.forModifiedFile(filePath, null, newLine, headSha);
-            }
+            Position position = PositionFactory.forLineRange(filePath, startLine, endLine, headSha, isNewFile);
+
+            // Merge Request의 diff_refs 정보 가져오기
+            MergeRequest mergeRequest = gitLabApi.getMergeRequestApi().getMergeRequest(projectId, mergeRequestIid);
+
+            position.withBaseSha(mergeRequest.getDiffRefs().getBaseSha())
+                    .withStartSha(mergeRequest.getDiffRefs().getStartSha());
 
             Discussion discussion = gitLabApi.getDiscussionsApi().createMergeRequestDiscussion(
                     projectId, mergeRequestIid, body, null, null, position);
 
-            log.info("Posted review comment for MR {} in project {} on file {} at line {}",
-                    mergeRequestIid, projectId, filePath, newLine);
+            log.info("Posted review comment for MR {} in project {} on file {} for lines {}-{}",
+                    mergeRequestIid, projectId, filePath, startLine, endLine);
             return discussion;
         } catch (GitLabApiException e) {
             log.error("Error posting review comment for MR {} in project {} on file {}",
@@ -91,5 +91,7 @@ public class GitLabService {
             throw new GitLabServiceException("Failed to post review comment", e);
         }
     }
+
+
 
 }
